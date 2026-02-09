@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pro Bet Game</title>
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
+  text-align:center;
+  padding:20px;
+}
+
+.box{
+  background: rgba(0,0,0,0.7);
+  padding:20px;
+  border-radius:15px;
+  display:inline-block;
+  animation: fadeIn 0.6s ease;
+}
+
+input, button{
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+}
+
+button{
+  background:#00c853;
+  color:white;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+button:hover{
+  background:#00e676;
+  transform:scale(1.05);
+}
+
+.match{
+  background:#1e1e1e;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+  animation: slideUp 0.5s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(20px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+@keyframes slideUp{
+  from{opacity:0; transform:translateY(40px);}
+  to{opacity:1; transform:translateY(0);}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+  <h2>Pro Bet Login</h2>
+  <input id="username" placeholder="Enter username">
+  <br>
+  <button onclick="login()">Enter</button>
+</div>
+
+<!-- GAME -->
+<div id="gameBox" style="display:none;">
+  <div class="box">
+    <h2>Welcome <span id="user"></span></h2>
+    <h3>Coins: <span id="coins"></span></h3>
+  </div>
+
+  <h2>Matches</h2>
+  <div id="matches"></div>
+
+  <div class="box">
+    <h3 id="result"></h3>
+    <h3>Leaderboard</h3>
+    <ul id="leaderboard"></ul>
+  </div>
+</div>
+
+<script>
+let currentUser=null;
+
+const matches=[
+  {id:1, team1:"Lions", team2:"Tigers"},
+  {id:2, team1:"Eagles", team2:"Sharks"},
+  {id:3, team1:"Kings", team2:"Warriors"}
+];
+
+function login(){
+  let name=document.getElementById("username").value;
+  if(!name) return;
+
+  currentUser=name;
+
+  if(!localStorage.getItem(name)){
+    localStorage.setItem(name,100);
+  }
+
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("gameBox").style.display="block";
+  document.getElementById("user").innerText=name;
+
+  updateCoins();
+  showMatches();
+  updateLeaderboard();
+}
+
+function updateCoins(){
+  let coins=localStorage.getItem(currentUser);
+  document.getElementById("coins").innerText=coins;
+}
+
+function showMatches(){
+  let container=document.getElementById("matches");
+  container.innerHTML="";
+
+  matches.forEach(match=>{
+    let div=document.createElement("div");
+    div.className="match";
+    div.innerHTML=`
+      <h3>${match.team1} vs ${match.team2}</h3>
+      <button onclick="bet('${match.team1}')">${match.team1}</button>
+      <button onclick="bet('${match.team2}')">${match.team2}</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function bet(choice){
+  let coins=parseInt(localStorage.getItem(currentUser));
+  if(coins<=0){
+    document.getElementById("result").innerText="No coins left!";
+    return;
+  }
+
+  let randomMatch=matches[Math.floor(Math.random()*matches.length)];
+  let winner=Math.random()<0.5?randomMatch.team1:randomMatch.team2;
+
+  if(choice===winner){
+    coins+=20;
+    document.getElementById("result").innerText="You won! Winner: "+winner;
+  }else{
+    coins-=20;
+    document.getElementById("result").innerText="You lost! Winner: "+winner;
+  }
+
+  localStorage.setItem(currentUser,coins);
+  updateCoins();
+  updateLeaderboard();
+}
+
+function updateLeaderboard(){
+  let list=document.getElementById("leaderboard");
+  list.innerHTML="";
+
+  let users=[];
+  for(let i=0;i<localStorage.length;i++){
+    let key=localStorage.key(i);
+    let value=localStorage.getItem(key);
+    if(!isNaN(value)){
+      users.push({name:key,coins:parseInt(value)});
+    }
+  }
+
+  users.sort((a,b)=>b.coins-a.coins);
+
+  users.forEach(u=>{
+    let li=document.createElement("li");
+    li.innerText=u.name+": "+u.coins+" coins";
+    list.appendChild(li);
+  });
+}
+</script>
+
+</body>
+</html>
